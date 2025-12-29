@@ -10,22 +10,26 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git python3 python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good libsqlite3-dev sqlite3 bzip2 libbz2-dev libssl-dev openssl libffi-dev libxcursor-dev libxinerama-dev libxrandr-dev libxi-dev libgl1-mesa-dev libglu1-mesa-dev autoconf automake libtool pkg-config ant ccache unzip
-          pip install --user --upgrade buildozer cython==0.29.33
+          pip install --user --upgrade "buildozer>=1.5.0" "cython<3.0"
 
       - name: APK Hazirlama
         run: |
           buildozer init
-          # Ayarları tek tek ve hatasız işliyoruz
+          # Spec ayarlarını tek seferde tertemiz yapalım
           sed -i 's/title = My Application/title = Cepte Esnaf/' buildozer.spec
           sed -i 's/package.name = myapp/package.name = cepteesnaf/' buildozer.spec
-          sed -i 's/source.include_exts = py,png,jpg,kv,atlas/source.include_exts = py,png,jpg,kv,json/' buildozer.spec
-          # Gereksinimleri en stabil halleriyle ekledik
-          sed -i 's/requirements = python3,kivy/requirements = python3,kivy==2.2.1,firebase-admin,certifi,urllib3,requests,idna,charset-normalizer/' buildozer.spec
+          sed -i 's/source.include_exts = py,png,jpg,kv,atlas/source.include_exts = py,png,jpg,kv,json,txt/' buildozer.spec
+          # Kütüphaneleri en uyumlu sürümleriyle tek tek yazıyoruz
+          sed -i 's/requirements = python3,kivy/requirements = python3,kivy==2.2.1,firebase-admin,certifi,urllib3,requests,idna,charset-normalizer,google-auth,cachetools/' buildozer.spec
           sed -i 's/#android.permissions = INTERNET/android.permissions = INTERNET,ACCESS_NETWORK_STATE/' buildozer.spec
           sed -i 's/#android.accept_sdk_license = False/android.accept_sdk_license = True/' buildozer.spec
+          sed -i 's/#android.api = 31/android.api = 33/' buildozer.spec
           
-          # Derlemeyi başlat
-          yes | buildozer -v android debug
+          # Hata almamak için log seviyesini yükseltiyoruz
+          buildozer -v android debug
+        env:
+          # Lisansları otomatik kabul etmesi için zorla
+          APP_ANDROID_ACCEPT_SDK_LICENSE: "True"
 
       - name: APK Dosyasini Kaydet
         uses: actions/upload-artifact@v4
